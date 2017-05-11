@@ -54,6 +54,11 @@ Getting Started
 User Documentation
 ******************
 
+.. toctree::
+   :maxdepth: 1
+
+   importing_astropy
+
 Data structures and transformations
 ----------------------------------------
 
