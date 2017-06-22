@@ -714,7 +714,7 @@ class Time(ShapedLikeNDArray):
             if self.location is None:
                 raise ValueError('No longitude is given but the location for '
                                  'the Time object is not set.')
-            longitude = self.location.longitude
+            longitude = self.location.lon
         elif longitude == 'greenwich':
             longitude = Longitude(0., u.degree,
                                   wrap_angle=180.*u.degree)
@@ -1227,9 +1227,9 @@ class Time(ShapedLikeNDArray):
         return self._delta_ut1_utc
 
     def _set_delta_ut1_utc(self, val):
-        val = self._match_shape(val)
         if hasattr(val, 'to'):  # Matches Quantity but also TimeDelta.
             val = val.to(u.second).value
+        val = self._match_shape(val)
         self._delta_ut1_utc = val
         del self.cache
 
@@ -1268,19 +1268,19 @@ class Time(ShapedLikeNDArray):
             else:
                 location = self.location
             # Geodetic params needed for d_tdb_tt()
-            lon = location.longitude
+            lon = location.lon
             rxy = np.hypot(location.x, location.y)
             z = location.z
             self._delta_tdb_tt = erfa.dtdb(
-                jd1, jd2, ut, lon.to(u.radian).value,
-                rxy.to(u.km).value, z.to(u.km).value)
+                jd1, jd2, ut, lon.to_value(u.radian),
+                rxy.to_value(u.km), z.to_value(u.km))
 
         return self._delta_tdb_tt
 
     def _set_delta_tdb_tt(self, val):
-        val = self._match_shape(val)
         if hasattr(val, 'to'):  # Matches Quantity but also TimeDelta.
             val = val.to(u.second).value
+        val = self._match_shape(val)
         self._delta_tdb_tt = val
         del self.cache
 

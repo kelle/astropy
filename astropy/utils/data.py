@@ -42,7 +42,7 @@ __all__ = [
     'get_pkg_data_filenames', 'compute_hash', 'clear_download_cache',
     'CacheMissingWarning', 'get_free_space_in_dir',
     'check_free_space_in_dir', 'download_file',
-    'download_files_in_parallel', 'is_url_in_cache']
+    'download_files_in_parallel', 'is_url_in_cache', 'get_cached_urls']
 
 
 class Conf(_config.ConfigNamespace):
@@ -901,9 +901,9 @@ def _find_pkg_data_path(data_name, package=None):
     path = os.path.join(module_path, data_name)
 
     root_dir = os.path.dirname(rootpkg.__file__)
-    assert _is_inside(path, root_dir), \
-           ("attempted to get a local data file outside "
-            "of the " + rootpkgname + " tree")
+    if not _is_inside(path, root_dir):
+        raise RuntimeError("attempted to get a local data file outside "
+                           "of the {} tree.".format(rootpkgname))
 
     return path
 
@@ -1131,6 +1131,7 @@ def download_file(remote_url, cache=False, show_progress=True, timeout=None):
 
     return local_path
 
+
 def is_url_in_cache(url_key):
     """
     Check if a download from ``url_key`` is in the cache.
@@ -1270,9 +1271,9 @@ def clear_download_cache(hashorurl=None):
         else:
             with _open_shelve(urlmapfn, True) as url2hash:
                 filepath = os.path.join(dldir, hashorurl)
-                assert _is_inside(filepath, dldir), \
-                       ("attempted to use clear_download_cache on a path "
-                        "outside the data cache directory")
+                if not _is_inside(filepath, dldir):
+                    raise RuntimeError("attempted to use clear_download_cache on"
+                                       " a path outside the data cache directory")
 
                 # shelve DBs don't accept unicode strings as keys in Python 2
                 if six.PY2 and isinstance(hashorurl, six.text_type):
@@ -1397,3 +1398,26 @@ def _release_download_cache_lock():
         msg = 'Error releasing lock. "{0}" either does not exist or is not ' +\
               'a directory.'
         raise RuntimeError(msg.format(lockdir))
+
+
+def get_cached_urls():
+    """
+    Get the list of URLs in the cache. Especially useful for looking up what
+    files are stored in your cache when you don't have internet access.
+
+    Returns
+    -------
+    cached_urls : list
+        List of cached URLs.
+    """
+    # The code below is modified from astropy.utils.data.download_file()
+    try:
+        dldir, urlmapfn = _get_download_cache_locs()
+    except (IOError, OSError) as e:
+        msg = 'Remote data cache could not be accessed due to '
+        estr = '' if len(e.args) < 1 else (': ' + str(e))
+        warn(CacheMissingWarning(msg + e.__class__.__name__ + estr))
+        return False
+
+    with _open_shelve(urlmapfn, True) as url2hash:
+        return list(url2hash.keys())

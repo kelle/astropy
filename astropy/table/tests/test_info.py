@@ -8,7 +8,6 @@ from collections import OrderedDict
 
 import numpy as np
 
-from ...extern import six
 from ...extern.six.moves import cStringIO as StringIO
 from ... import units as u
 from ... import time
@@ -115,7 +114,7 @@ def test_table_info_stats(table_types):
     assert np.all(tinfo['name'] == ['a', 'b', 'c', 'd'])
     assert np.all(tinfo['dtype'] == ['int32', 'float32', dtype_info_name('S1'), 'object'])
     assert np.all(tinfo['sum'] == ['6', '6.0', '--', '--'])
-    assert np.all(tinfo['first'] == ['1', '1.0', 'a' if six.PY2 else "b'a'", '1.0'])
+    assert np.all(tinfo['first'] == ['1', '1.0', 'a', '1.0'])
 
 def test_data_info():
     """

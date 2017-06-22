@@ -202,7 +202,7 @@ def test_data_name_third_party_package():
         sys.path.pop(0)
 
 
-@raises(AssertionError)
+@raises(RuntimeError)
 def test_local_data_nonlocalfail():
     from ..data import get_pkg_data_filename
 
@@ -426,3 +426,10 @@ def test_path_objects_get_readable_fileobj():
     fpath = pathlib.Path(get_pkg_data_filename(os.path.join('data', 'local.dat')))
     with get_readable_fileobj(fpath) as f:
         assert f.read().rstrip() == 'This file is used in the test_local_data_* testing functions\nCONTENT'
+
+@remote_data
+def test_get_cached_urls():
+    from ..data import download_file, get_cached_urls
+    download_file(TESTURL, cache=True, show_progress=False)
+
+    assert TESTURL in get_cached_urls()

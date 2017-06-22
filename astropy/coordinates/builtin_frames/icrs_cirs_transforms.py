@@ -11,7 +11,7 @@ import numpy as np
 
 from ... import units as u
 from ..baseframe import frame_transform_graph
-from ..transformations import FunctionTransform
+from ..transformations import FunctionTransform, AffineTransform
 from ..representation import (SphericalRepresentation, CartesianRepresentation,
                               UnitSphericalRepresentation)
 from ... import _erfa as erfa
@@ -35,8 +35,8 @@ def icrs_to_cirs(icrs_coo, cirs_frame):
     if icrs_coo.data.get_name() == 'unitspherical' or icrs_coo.data.to_cartesian().x.unit == u.one:
         # if no distance, just do the infinite-distance/no parallax calculation
         usrepr = icrs_coo.represent_as(UnitSphericalRepresentation)
-        i_ra = usrepr.lon.to(u.radian).value
-        i_dec = usrepr.lat.to(u.radian).value
+        i_ra = usrepr.lon.to_value(u.radian)
+        i_dec = usrepr.lat.to_value(u.radian)
         cirs_ra, cirs_dec = atciqz(i_ra, i_dec, astrom)
 
         newrep = UnitSphericalRepresentation(lat=u.Quantity(cirs_dec, u.radian, copy=False),
@@ -52,8 +52,8 @@ def icrs_to_cirs(icrs_coo, cirs_frame):
         newcart = icrs_coo.cartesian - astrom_eb
 
         srepr = newcart.represent_as(SphericalRepresentation)
-        i_ra = srepr.lon.to(u.radian).value
-        i_dec = srepr.lat.to(u.radian).value
+        i_ra = srepr.lon.to_value(u.radian)
+        i_dec = srepr.lat.to_value(u.radian)
         cirs_ra, cirs_dec = atciqz(i_ra, i_dec, astrom)
 
         newrep = SphericalRepresentation(lat=u.Quantity(cirs_dec, u.radian, copy=False),
@@ -66,8 +66,8 @@ def icrs_to_cirs(icrs_coo, cirs_frame):
 @frame_transform_graph.transform(FunctionTransform, CIRS, ICRS)
 def cirs_to_icrs(cirs_coo, icrs_frame):
     srepr = cirs_coo.represent_as(UnitSphericalRepresentation)
-    cirs_ra = srepr.lon.to(u.radian).value
-    cirs_dec = srepr.lat.to(u.radian).value
+    cirs_ra = srepr.lon.to_value(u.radian)
+    cirs_dec = srepr.lat.to_value(u.radian)
 
     # set up the astrometry context for ICRS<->cirs and then convert to
     # astrometric coordinate direction
@@ -138,8 +138,8 @@ def icrs_to_gcrs(icrs_coo, gcrs_frame):
     if icrs_coo.data.get_name() == 'unitspherical' or icrs_coo.data.to_cartesian().x.unit == u.one:
         # if no distance, just do the infinite-distance/no parallax calculation
         usrepr = icrs_coo.represent_as(UnitSphericalRepresentation)
-        i_ra = usrepr.lon.to(u.radian).value
-        i_dec = usrepr.lat.to(u.radian).value
+        i_ra = usrepr.lon.to_value(u.radian)
+        i_dec = usrepr.lat.to_value(u.radian)
         gcrs_ra, gcrs_dec = atciqz(i_ra, i_dec, astrom)
 
         newrep = UnitSphericalRepresentation(lat=u.Quantity(gcrs_dec, u.radian, copy=False),
@@ -155,8 +155,8 @@ def icrs_to_gcrs(icrs_coo, gcrs_frame):
         newcart = icrs_coo.cartesian - astrom_eb
 
         srepr = newcart.represent_as(SphericalRepresentation)
-        i_ra = srepr.lon.to(u.radian).value
-        i_dec = srepr.lat.to(u.radian).value
+        i_ra = srepr.lon.to_value(u.radian)
+        i_dec = srepr.lat.to_value(u.radian)
         gcrs_ra, gcrs_dec = atciqz(i_ra, i_dec, astrom)
 
         newrep = SphericalRepresentation(lat=u.Quantity(gcrs_dec, u.radian, copy=False),
@@ -169,8 +169,8 @@ def icrs_to_gcrs(icrs_coo, gcrs_frame):
 @frame_transform_graph.transform(FunctionTransform, GCRS, ICRS)
 def gcrs_to_icrs(gcrs_coo, icrs_frame):
     srepr = gcrs_coo.represent_as(UnitSphericalRepresentation)
-    gcrs_ra = srepr.lon.to(u.radian).value
-    gcrs_dec = srepr.lat.to(u.radian).value
+    gcrs_ra = srepr.lon.to_value(u.radian)
+    gcrs_dec = srepr.lat.to_value(u.radian)
 
     # set up the astrometry context for ICRS<->GCRS and then convert to BCRS
     # coordinate direction
@@ -231,8 +231,8 @@ def gcrs_to_hcrs(gcrs_coo, hcrs_frame):
         gcrs_coo = gcrs_coo.transform_to(GCRS(**frameattrs))
 
     srepr = gcrs_coo.represent_as(UnitSphericalRepresentation)
-    gcrs_ra = srepr.lon.to(u.radian).value
-    gcrs_dec = srepr.lat.to(u.radian).value
+    gcrs_ra = srepr.lon.to_value(u.radian)
+    gcrs_dec = srepr.lat.to_value(u.radian)
 
     # set up the astrometry context for ICRS<->GCRS and then convert to ICRS
     # coordinate direction
@@ -284,30 +284,43 @@ _NEED_ORIGIN_HINT = ("The input {0} coordinates do not have length units. This "
                      "function in this case because there is an origin shift.")
 
 
-@frame_transform_graph.transform(FunctionTransform, HCRS, ICRS)
+@frame_transform_graph.transform(AffineTransform, HCRS, ICRS)
 def hcrs_to_icrs(hcrs_coo, icrs_frame):
     # this is just an origin translation so without a distance it cannot go ahead
-    if hcrs_coo.data.__class__ == UnitSphericalRepresentation:
+    if isinstance(hcrs_coo.data, UnitSphericalRepresentation):
         raise u.UnitsError(_NEED_ORIGIN_HINT.format(hcrs_coo.__class__.__name__))
 
-    # this goes here to avoid circular import errors
-    from ..solar_system import get_body_barycentric
-    bary_sun_pos = get_body_barycentric('sun', hcrs_coo.obstime)
-    newrep = hcrs_coo.cartesian + bary_sun_pos
-    return icrs_frame.realize_frame(newrep)
+    if hcrs_coo.data.differentials:
+        from ..solar_system import get_body_barycentric_posvel
+        bary_sun_pos, bary_sun_vel = get_body_barycentric_posvel('sun',
+                                                                 hcrs_coo.obstime)
+        bary_sun_pos = bary_sun_pos.with_differentials(bary_sun_vel)
 
+    else:
+        from ..solar_system import get_body_barycentric
+        bary_sun_pos = get_body_barycentric('sun', hcrs_coo.obstime)
+        bary_sun_vel = None
 
-@frame_transform_graph.transform(FunctionTransform, ICRS, HCRS)
+    return None, bary_sun_pos
+
+@frame_transform_graph.transform(AffineTransform, ICRS, HCRS)
 def icrs_to_hcrs(icrs_coo, hcrs_frame):
     # this is just an origin translation so without a distance it cannot go ahead
-    if icrs_coo.data.__class__ == UnitSphericalRepresentation:
+    if isinstance(icrs_coo.data, UnitSphericalRepresentation):
         raise u.UnitsError(_NEED_ORIGIN_HINT.format(icrs_coo.__class__.__name__))
 
-    # this goes here to avoid circular import errors
-    from ..solar_system import get_body_barycentric
-    bary_sun_pos = get_body_barycentric('sun', hcrs_frame.obstime)
-    newrep = icrs_coo.cartesian - bary_sun_pos
-    return hcrs_frame.realize_frame(newrep)
+    if icrs_coo.data.differentials:
+        from ..solar_system import get_body_barycentric_posvel
+        bary_sun_pos, bary_sun_vel = get_body_barycentric_posvel('sun',
+                                                                 hcrs_frame.obstime)
+        bary_sun_pos = -bary_sun_pos.with_differentials(-bary_sun_vel)
+
+    else:
+        from ..solar_system import get_body_barycentric
+        bary_sun_pos = -get_body_barycentric('sun', hcrs_frame.obstime)
+        bary_sun_vel = None
+
+    return None, bary_sun_pos
 
 
 @frame_transform_graph.transform(FunctionTransform, HCRS, HCRS)

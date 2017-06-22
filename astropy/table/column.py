@@ -28,7 +28,6 @@ from ._column_mixins import _ColumnGetitemShim, _MaskedColumnGetitemShim
 # Create a generic TableFormatter object for use by bare columns with no
 # parent table.
 FORMATTER = pprint.TableFormatter()
-INTEGER_TYPES = (int, long, np.integer) if six.PY2 else (int, np.integer)
 
 class StringTruncateWarning(UserWarning):
     """
@@ -214,6 +213,8 @@ class BaseColumn(_ColumnGetitemShim, np.ndarray):
                 meta = deepcopy(data.info.meta)
 
         else:
+            if not six.PY2 and np.dtype(dtype).char == 'S':
+                data = cls._encode_str(data)
             self_data = np.array(data, dtype=dtype, copy=copy)
 
         self = self_data.view(cls)
@@ -332,14 +333,6 @@ class BaseColumn(_ColumnGetitemShim, np.ndarray):
         state = state + (column_state,)
 
         return reconstruct_func, reconstruct_func_args, state
-
-    # avoid == and != to be done based on type of subclass
-    # (helped solve #1446; see also __array_wrap__)
-    def __eq__(self, other):
-        return self.data.__eq__(other)
-
-    def __ne__(self, other):
-        return self.data.__ne__(other)
 
     def __array_finalize__(self, obj):
         # Obj will be none for direct call to Column() creator
@@ -702,6 +695,23 @@ class BaseColumn(_ColumnGetitemShim, np.ndarray):
             setattr(self, attr, val)
         self.meta = deepcopy(getattr(obj, 'meta', {}))
 
+    @staticmethod
+    def _encode_str(value):
+        """
+        Encode anything that is unicode-ish as utf-8.  This method is only
+        called for Py3+.
+        """
+        if isinstance(value, str):
+            value = value.encode('utf-8')
+        elif isinstance(value, bytes) or value is np.ma.masked:
+            pass
+        else:
+            value = np.asarray(value)
+            if value.dtype.char == 'U':
+                value = np.char.encode(value, encoding='utf-8')
+
+        return value
+
 
 class Column(BaseColumn):
     """Define a data column for use in a Table object.
@@ -873,6 +883,9 @@ class Column(BaseColumn):
                           stacklevel=3)
 
     def __setitem__(self, index, value):
+        if not six.PY2 and self.dtype.char == 'S':
+            value = self._encode_str(value)
+
         # Issue warning for string assignment that truncates ``value``
         if issubclass(self.dtype.type, np.character):
             self._check_string_truncate(value)
@@ -890,7 +903,25 @@ class Column(BaseColumn):
         def __setslice__(self, start, stop, value):
             self.__setitem__(slice(start, stop), value)
 
-    def insert(self, obj, values):
+    def _make_compare(oper):
+        """
+        Make comparison methods which encode the ``other`` object to utf-8
+        in the case of a bytestring dtype for Py3+.
+        """
+        def _compare(self, other):
+            if not six.PY2 and self.dtype.char == 'S':
+                other = self._encode_str(other)
+            return getattr(self.data, oper)(other)
+        return _compare
+
+    __eq__ = _make_compare('__eq__')
+    __ne__ = _make_compare('__ne__')
+    __gt__ = _make_compare('__gt__')
+    __lt__ = _make_compare('__lt__')
+    __ge__ = _make_compare('__ge__')
+    __le__ = _make_compare('__le__')
+
+    def insert(self, obj, values, axis=0):
         """
         Insert values before the given indices in the column and return
         a new `~astropy.table.Column` object.
@@ -904,6 +935,10 @@ class Column(BaseColumn):
             Value(s) to insert.  If the type of ``values`` is different
             from that of quantity, ``values`` is converted to the matching type.
             ``values`` should be shaped so that it can be broadcast appropriately
+        axis : int, optional
+            Axis along which to insert ``values``.  If ``axis`` is None then
+            the column array is flattened before insertion.  Default is 0,
+            which will insert a row.
 
         Returns
         -------
@@ -915,13 +950,13 @@ class Column(BaseColumn):
             # Even if values is array-like (e.g. [1,2,3]), insert as a single
             # object.  Numpy.insert instead inserts each element in an array-like
             # input individually.
-            data = np.insert(self, obj, None, axis=0)
+            data = np.insert(self, obj, None, axis=axis)
             data[obj] = values
         else:
             # Explicitly convert to dtype of this column.  Needed because numpy 1.7
             # enforces safe casting by default, so .  This isn't the case for 1.6 or 1.8+.
             values = np.asarray(values, dtype=self.dtype)
-            data = np.insert(self, obj, values, axis=0)
+            data = np.insert(self, obj, values, axis=axis)
         out = data.view(self.__class__)
         out.__array_finalize__(self)
         return out
@@ -1111,7 +1146,7 @@ class MaskedColumn(Column, _MaskedColumnGetitemShim, ma.MaskedArray):
                          meta=deepcopy(self.meta))
         return out
 
-    def insert(self, obj, values, mask=None):
+    def insert(self, obj, values, mask=None, axis=0):
         """
         Insert values along the given axis before the given indices and return
         a new `~astropy.table.MaskedColumn` object.
@@ -1127,6 +1162,10 @@ class MaskedColumn(Column, _MaskedColumnGetitemShim, ma.MaskedArray):
             ``values`` should be shaped so that it can be broadcast appropriately
         mask : boolean array_like
             Mask value(s) to insert.  If not supplied then False is used.
+        axis : int, optional
+            Axis along which to insert ``values``.  If ``axis`` is None then
+            the column array is flattened before insertion.  Default is 0,
+            which will insert a row.
 
         Returns
         -------
@@ -1140,20 +1179,20 @@ class MaskedColumn(Column, _MaskedColumnGetitemShim, ma.MaskedArray):
             # Even if values is array-like (e.g. [1,2,3]), insert as a single
             # object.  Numpy.insert instead inserts each element in an array-like
             # input individually.
-            new_data = np.insert(self_ma.data, obj, None, axis=0)
+            new_data = np.insert(self_ma.data, obj, None, axis=axis)
             new_data[obj] = values
         else:
             # Explicitly convert to dtype of this column.  Needed because numpy 1.7
             # enforces safe casting by default, so .  This isn't the case for 1.6 or 1.8+.
             values = np.asarray(values, dtype=self.dtype)
-            new_data = np.insert(self_ma.data, obj, values, axis=0)
+            new_data = np.insert(self_ma.data, obj, values, axis=axis)
 
         if mask is None:
             if self.dtype.kind == 'O':
                 mask = False
             else:
                 mask = np.zeros(values.shape, dtype=np.bool)
-        new_mask = np.insert(self_ma.mask, obj, mask, axis=0)
+        new_mask = np.insert(self_ma.mask, obj, mask, axis=axis)
         new_ma = np.ma.array(new_data, mask=new_mask, copy=False)
 
         out = new_ma.view(self.__class__)
@@ -1176,6 +1215,9 @@ class MaskedColumn(Column, _MaskedColumnGetitemShim, ma.MaskedArray):
 
     def __setitem__(self, index, value):
         # Issue warning for string assignment that truncates ``value``
+        if not six.PY2 and self.dtype.char == 'S':
+            value = self._encode_str(value)
+
         if issubclass(self.dtype.type, np.character):
             # Account for a bug in np.ma.MaskedArray setitem.
             # https://github.com/numpy/numpy/issues/8624

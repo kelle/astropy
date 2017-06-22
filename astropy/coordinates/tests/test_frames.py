@@ -66,7 +66,7 @@ def test_frame_attribute_descriptor():
 
 def test_frame_subclass_attribute_descriptor():
     from ..builtin_frames import FK4
-    from ..baseframe import FrameAttribute, TimeFrameAttribute
+    from ..frame_attributes import FrameAttribute, TimeFrameAttribute
     from astropy.time import Time
 
     _EQUINOX_B1980 = Time('B1980', scale='tai')
@@ -278,6 +278,31 @@ def test_realizing():
 
     assert f2.equinox == f.equinox
     assert f2.equinox != FK5.get_frame_attr_names()['equinox']
+
+
+def test_replicating():
+    from ..builtin_frames import ICRS, AltAz
+    from ...time import Time
+
+    i = ICRS(ra=[1]*u.deg, dec=[2]*u.deg)
+
+    icopy = i.replicate(copy=True)
+    irepl = i.replicate(copy=False)
+    i.data._lat[:] = 0*u.deg
+    assert np.all(i.data.lat == irepl.data.lat)
+    assert np.all(i.data.lat != icopy.data.lat)
+
+
+    iclone = i.replicate_without_data()
+    assert i.has_data
+    assert not iclone.has_data
+
+    aa = AltAz(alt=1*u.deg, az=2*u.deg, obstime=Time('J2000'))
+    aaclone = aa.replicate_without_data(obstime=Time('J2001'))
+    assert not aaclone.has_data
+    assert aa.obstime != aaclone.obstime
+    assert aa.pressure == aaclone.pressure
+    assert aa.obswl == aaclone.obswl
 
 
 def test_getitem():
@@ -582,8 +607,8 @@ def test_eloc_attributes():
     el1 = AltAz(location=el).location
     assert isinstance(el1, EarthLocation)
     # these should match *exactly* because the EarthLocation
-    assert el1.latitude == el.latitude
-    assert el1.longitude == el.longitude
+    assert el1.lat == el.lat
+    assert el1.lon == el.lon
     assert el1.height == el.height
 
     el2 = AltAz(location=it).location
@@ -594,16 +619,16 @@ def test_eloc_attributes():
     # only along the z-axis), but latitude should not. Also, height is relative
     # to the *surface* in EarthLocation, but the ITRS distance is relative to
     # the center of the Earth
-    assert not allclose(el2.latitude, it.spherical.lat)
-    assert allclose(el2.longitude, it.spherical.lon)
+    assert not allclose(el2.lat, it.spherical.lat)
+    assert allclose(el2.lon, it.spherical.lon)
     assert el2.height < -6000*u.km
 
     el3 = AltAz(location=gc).location
     # GCRS inputs implicitly get transformed to ITRS and then onto
     # EarthLocation's elliptical geoid. So both lat and lon shouldn't match
     assert isinstance(el3, EarthLocation)
-    assert not allclose(el3.latitude, gc.dec)
-    assert not allclose(el3.longitude, gc.ra)
+    assert not allclose(el3.lat, gc.dec)
+    assert not allclose(el3.lon, gc.ra)
     assert np.abs(el3.height) < 500*u.km
 
 

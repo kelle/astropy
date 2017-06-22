@@ -121,8 +121,8 @@ class TestInput():
         assert type(self.location.x) is u.Quantity
         assert type(self.location.y) is u.Quantity
         assert type(self.location.z) is u.Quantity
-        assert type(self.location.longitude) is Longitude
-        assert type(self.location.latitude) is Latitude
+        assert type(self.location.lon) is Longitude
+        assert type(self.location.lat) is Latitude
         assert type(self.location.height) is u.Quantity
 
     def test_input(self):
@@ -136,22 +136,22 @@ class TestInput():
         assert np.all(geocentric2 == self.location)
         geodetic = EarthLocation(self.lon, self.lat, self.h)
         assert np.all(geodetic == self.location)
-        geodetic2 = EarthLocation(self.lon.to(u.degree).value,
-                                  self.lat.to(u.degree).value,
-                                  self.h.to(u.m).value)
+        geodetic2 = EarthLocation(self.lon.to_value(u.degree),
+                                  self.lat.to_value(u.degree),
+                                  self.h.to_value(u.m))
         assert np.all(geodetic2 == self.location)
         geodetic3 = EarthLocation(self.lon, self.lat)
-        assert allclose_m14(geodetic3.longitude.value,
-                            self.location.longitude.value)
-        assert allclose_m14(geodetic3.latitude.value,
-                            self.location.latitude.value)
+        assert allclose_m14(geodetic3.lon.value,
+                            self.location.lon.value)
+        assert allclose_m14(geodetic3.lat.value,
+                            self.location.lat.value)
         assert not np.any(isclose_m14(geodetic3.height.value,
                                       self.location.height.value))
         geodetic4 = EarthLocation(self.lon, self.lat, self.h[-1])
-        assert allclose_m14(geodetic4.longitude.value,
-                            self.location.longitude.value)
-        assert allclose_m14(geodetic4.latitude.value,
-                            self.location.latitude.value)
+        assert allclose_m14(geodetic4.lon.value,
+                            self.location.lon.value)
+        assert allclose_m14(geodetic4.lat.value,
+                            self.location.lat.value)
         assert allclose_m14(geodetic4.height[-1].value,
                             self.location.height[-1].value)
         assert not np.any(isclose_m14(geodetic4.height[:-1].value,
@@ -161,12 +161,12 @@ class TestInput():
         assert geocentric5.unit is u.pc
         assert geocentric5.x.unit is u.pc
         assert geocentric5.height.unit is u.pc
-        assert allclose_m14(geocentric5.x.to(self.x.unit).value, self.x.value)
+        assert allclose_m14(geocentric5.x.to_value(self.x.unit), self.x.value)
         geodetic5 = EarthLocation(self.lon, self.lat, self.h.to(u.pc))
         assert geodetic5.unit is u.pc
         assert geodetic5.x.unit is u.pc
         assert geodetic5.height.unit is u.pc
-        assert allclose_m14(geodetic5.x.to(self.x.unit).value, self.x.value)
+        assert allclose_m14(geodetic5.x.to_value(self.x.unit), self.x.value)
 
     def test_invalid_input(self):
         """Check invalid input raises exception"""
@@ -254,6 +254,18 @@ class TestInput():
         else:
             assert not np.all(isclose_m14(location.z.value, self.z.value))
 
+        def test_to_value(self):
+            loc = self.location
+            loc_ndarray = loc.view(np.ndarray)
+            assert np.all(loc.value == loc_ndarray)
+            loc2 = self.location.to(u.km)
+            loc2_ndarray = np.empty_like(loc_ndarray)
+            for coo in 'x', 'y', 'z':
+                loc2_ndarray[coo] = loc_ndarray[coo] / 1000.
+            assert np.all(loc2.value == loc2_ndarray)
+            loc2_value = self.location.to_value(u.km)
+            assert np.all(loc2_value == loc2_ndarray)
+
 
 def test_pickling():
     """Regression test against #4304."""
@@ -280,12 +292,27 @@ def test_of_address():
 
     # just a location
     loc = EarthLocation.of_address("New York, NY")
-    assert quantity_allclose(loc.latitude, 40.7128*u.degree)
-    assert quantity_allclose(loc.longitude, -74.0059*u.degree)
+    assert quantity_allclose(loc.lat, 40.7128*u.degree)
+    assert quantity_allclose(loc.lon, -74.0059*u.degree)
     assert np.allclose(loc.height.value, 0.)
 
     # a location and height
     loc = EarthLocation.of_address("New York, NY", get_height=True)
-    assert quantity_allclose(loc.latitude, 40.7128*u.degree)
-    assert quantity_allclose(loc.longitude, -74.0059*u.degree)
+    assert quantity_allclose(loc.lat, 40.7128*u.degree)
+    assert quantity_allclose(loc.lon, -74.0059*u.degree)
     assert quantity_allclose(loc.height, 10.438659669*u.meter, atol=1.*u.cm)
+
+
+def test_geodetic_tuple():
+    lat = 2*u.deg
+    lon = 10*u.deg
+    height = 100*u.m
+
+    el = EarthLocation.from_geodetic(lat=lat, lon=lon, height=height)
+
+    res1 = el.to_geodetic()
+    res2 = el.geodetic
+
+    assert res1.lat == res2.lat and quantity_allclose(res1.lat, lat)
+    assert res1.lon == res2.lon and quantity_allclose(res1.lon, lon)
+    assert res1.height == res2.height and quantity_allclose(res1.height, height)

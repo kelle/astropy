@@ -16,6 +16,7 @@
 Astropy Documentation
 ##################################
 
+
 .. |logo_svg| image:: _static/astropy_banner.svg
 
 .. |logo_png| image:: _static/astropy_banner_96.png
@@ -34,6 +35,7 @@ tools needed for performing astronomy and astrophysics with Python.
 
 .. _getting-started:
 
+<<<<<<< HEAD
 ******************
 Getting Started
 ******************
@@ -53,14 +55,38 @@ Getting Started
 ******************
 User Documentation
 ******************
+=======
+***************
+Getting Started
+***************
+>>>>>>> cb93baa9d1aeba2a6ccdac137eff3a842eb9e069
 
 .. toctree::
    :maxdepth: 1
 
+<<<<<<< HEAD
    importing_astropy
 
 Data structures and transformations
 ----------------------------------------
+=======
+   install
+   importing_astropy
+   Example Gallery <generated/examples/index>
+   Tutorials <http://tutorials.astropy.org/>
+   Get Help <http://www.astropy.org/help.html>
+   Contribute and Report Problems <http://www.astropy.org/contribute.html>
+   About the astropy project <http://www.astropy.org/about.html>
+
+.. _user-docs:
+
+******************
+User Documentation
+******************
+
+Data structures and transformations
+-----------------------------------
+>>>>>>> cb93baa9d1aeba2a6ccdac137eff3a842eb9e069
 
 .. toctree::
    :maxdepth: 1
@@ -75,8 +101,13 @@ Data structures and transformations
    modeling/index
    analytic_functions/index
 
+<<<<<<< HEAD
 Files and I/O
 ----------------------------
+=======
+Files, I/O, and Communication
+-----------------------------
+>>>>>>> cb93baa9d1aeba2a6ccdac137eff3a842eb9e069
 
 .. toctree::
    :maxdepth: 1
@@ -86,10 +117,15 @@ Files and I/O
    io/ascii/index
    io/votable/index
    io/misc
+   samp/index
    vo/index
 
 Computations and utilities
+<<<<<<< HEAD
 ------------------------------------
+=======
+--------------------------
+>>>>>>> cb93baa9d1aeba2a6ccdac137eff3a842eb9e069
 
 .. toctree::
    :maxdepth: 1
@@ -115,9 +151,9 @@ Nuts and bolts
 
 .. _developer-docs:
 
-***********************
+=======================
 Developer Documentation
-***********************
+=======================
 
 The developer documentation contains instructions for how to contribute to
 Astropy or affiliated packages, as well as coding, documentation, and
@@ -145,9 +181,15 @@ There are additional tools of use for developers in the
 
 .. _project-details:
 
+<<<<<<< HEAD
 ***********************
 Project details
 ***********************
+=======
+***************
+Project details
+***************
+>>>>>>> cb93baa9d1aeba2a6ccdac137eff3a842eb9e069
 
 .. toctree::
    :maxdepth: 1
@@ -158,9 +200,15 @@ Project details
    credits
    license
 
+<<<<<<< HEAD
 ******************
 Index
 ******************
+=======
+*****
+Index
+*****
+>>>>>>> cb93baa9d1aeba2a6ccdac137eff3a842eb9e069
 
 * :ref:`genindex`
 * :ref:`modindex`

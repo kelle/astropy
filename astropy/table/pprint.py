@@ -20,7 +20,7 @@ __all__ = []
 
 def default_format_func(format_, val):
     if isinstance(val, bytes):
-        return val.decode('utf-8')
+        return val.decode('utf-8', errors='replace')
     else:
         return text_type(val)
 
@@ -123,7 +123,8 @@ def get_auto_format_func(
                     # Does this string format method work?
                     out = format_func(format_, val)
                     # Require that the format statement actually did something.
-                    assert out != format_
+                    if out == format_:
+                        raise ValueError('the format passed in did nothing.')
                 except Exception:
                     continue
                 else:
