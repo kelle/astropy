@@ -1,28 +1,21 @@
 Contributing to Astropy
 =======================
 
-Reporting Issues
-----------------
-
-When opening an issue to report a problem, please try to provide a minimal code
-example that reproduces the issue along with details of the operating
-system and the Python, NumPy, and `astropy` versions you are using.
-
-Contributing Code
------------------
-
-So you are interested in contributing code to the Astropy Project? Excellent!
+So you are interested in contributing to the Astropy Project? Excellent!
 We love contributions! Astropy is open source, built on open source,
 and we'd love to have you hang out in our community.
 
-**Imposter syndrome disclaimer**: We want your help. No, really.
+Anti Imposter Syndrome Reassurance
+----------------------------------
+
+We want your help. No, really.
 
 There may be a little voice inside your head that is telling you that you're not
 ready to be an open source contributor; that your skills aren't nearly good
 enough to contribute. What could you possibly offer a project like this one?
 
-We assure you - the little voice in your head is wrong. If you can write code at
-all, or even documentation, you can contribute code to open source.
+We assure you - the little voice in your head is wrong. If you can write code or 
+documentation, you can contribute code to open source.
 Contributing to open source projects is a fantastic way to advance one's coding
 and open source workflow skills. Writing perfect code isn't the measure of a good
 developer (that would disqualify all of us!); it's trying to create something,
@@ -36,11 +29,14 @@ process). Some of these contributions may be the most valuable to the project as
 a whole, because you're coming to the project with fresh eyes, so you can see
 the errors and assumptions that seasoned contributors have glossed over.
 
-Note: This disclaimer was originally written by
+Note: This text was originally written by
 [Adrienne Lowe](https://github.com/adriennefriend) for a
 [PyCon talk](https://www.youtube.com/watch?v=6Uj746j9Heo), and was adapted by
 Astropy based on its use in the README file for the
 [MetPy project](https://github.com/Unidata/MetPy).
+
+Instructions for Contributing to an Astropy Repository 
+-----------------------------------------------
 
 Most contributions to Astropy are done via pull requests from GitHub users'
 forks of the [astropy repository](https://github.com/astropy/astropy). If you
@@ -55,7 +51,7 @@ and follow the Astropy guidelines for reuse, interoperability, and interfacing.
 Each affiliated package has its own developers/maintainers and its own specific
 guidelines for contributions, so be sure to read their docs.
 
-Once you open a pull request (which should be opened against the ``master``
+Once you open a pull request (which should be opened against the ``main``
 branch, not against any of the other branches), please make sure to
 include the following:
 
@@ -93,42 +89,14 @@ include the following:
   issues) need to be mentioned. If in doubt, ask the core maintainer reviewing
   your changes.
 
-Other Tips
-----------
-
-- To prevent the automated tests from running, you can add ``[ci skip]`` to your
-  commit message. This is useful if your PR is a work in progress and you are
-  not yet ready for the tests to run. For example:
-
-      $ git commit -m "WIP widget [ci skip]"
-
-  - If you already made the commit without including this string, you can edit
-    your existing commit message by running:
-
-        $ git commit --amend
-
-- To skip only the tests running on Travis CI use ``[skip travis]``.
-
-- If your commit makes substantial changes to the documentation but no code
-  changes, then you can use ``[skip travis]``, which will skip Travis CI
-  because documentation build is done on CircleCI. The exception to this rule
-  is when your changes to documentation include code snippets that need to
-  be tested using ``doctest``.
-
-- When contributing trivial documentation fixes (i.e., fixes to typos, spelling,
-  grammar) that don't contain any special markup and are not associated with
-  code changes, please include the string ``[skip travis]`` in your commit
-  message.
-
-      $ git commit -m "Fixed typo [skip travis]"
-
 Checklist for Contributed Code
 ------------------------------
 
-A pull request for a new feature will be reviewed to see if it meets the
-following requirements. For any pull request, an `astropy` maintainer can help
-to make sure that the pull request meets the requirements for inclusion in the
-package.
+Before being merged, a pull request for a new feature will be reviewed to see if 
+it meets the following requirements. If you are unsure about how to meet all of these
+requirements, please submit the PR and ask for help and/or guidance. An Astropy
+maintainer will collaborate with you to make sure that the pull request meets the 
+requirements for inclusion in the package.
 
 **Scientific Quality** (when applicable)
   * Is the submission relevant to astronomy?
@@ -177,3 +145,32 @@ package.
   * Do all the Travis CI and CircleCI tests pass?
   * If applicable, has an entry been added into the changelog?
   * Can you check out the pull request and repeat the examples and tests?
+
+Other Tips
+----------
+
+- To prevent the automated tests from running, you can add ``[ci skip]`` to your
+  commit message. This is useful if your PR is a work in progress and you are
+  not yet ready for the tests to run. For example:
+
+      $ git commit -m "WIP widget [ci skip]"
+
+  - If you already made the commit without including this string, you can edit
+    your existing commit message by running:
+
+        $ git commit --amend
+
+- To skip only the tests running on Travis CI use ``[skip travis]``.
+
+- If your commit makes substantial changes to the documentation but no code
+  changes, then you can use ``[skip travis]``, which will skip Travis CI
+  because documentation build is done on CircleCI. The exception to this rule
+  is when your changes to documentation include code snippets that need to
+  be tested using ``doctest``.
+
+- When contributing trivial documentation fixes (i.e., fixes to typos, spelling,
+  grammar) that don't contain any special markup and are not associated with
+  code changes, please include the string ``[skip travis]`` in your commit
+  message.
+
+      $ git commit -m "Fixed typo [skip travis]"
