@@ -14,7 +14,7 @@ There may be a little voice inside your head that is telling you that you're not
 ready to be an open source contributor; that your skills aren't nearly good
 enough to contribute. What could you possibly offer a project like this one?
 
-We assure you - the little voice in your head is wrong. If you can write code or 
+We assure you - the little voice in your head is wrong. If you can write code or
 documentation, you can contribute code to open source.
 Contributing to open source projects is a fantastic way to advance one's coding
 and open source workflow skills. Writing perfect code isn't the measure of a good
@@ -35,8 +35,8 @@ Note: This text was originally written by
 Astropy based on its use in the README file for the
 [MetPy project](https://github.com/Unidata/MetPy).
 
-Instructions for Contributing to an Astropy Repository 
------------------------------------------------
+Instructions for Contributing to an Astropy Repository
+------------------------------------------------------
 
 Most contributions to Astropy are done via pull requests from GitHub users'
 forks of the [astropy repository](https://github.com/astropy/astropy). If you
@@ -92,11 +92,11 @@ include the following:
 Checklist for Contributed Code
 ------------------------------
 
-Before being merged, a pull request for a new feature will be reviewed to see if 
+Before being merged, a pull request for a new feature will be reviewed to see if
 it meets the following requirements. If you are unsure about how to meet all of these
 requirements, please submit the PR and ask for help and/or guidance. An Astropy
-maintainer will collaborate with you to make sure that the pull request meets the 
-requirements for inclusion in the package.
+maintainer will collaborate with you to make sure that the pull request meets the
+requirements for inclusion in the package:
 
 **Scientific Quality** (when applicable)
   * Is the submission relevant to astronomy?
